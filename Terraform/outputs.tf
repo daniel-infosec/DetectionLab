@@ -13,3 +13,7 @@ output "wef_public_ip" {
 output "win10_public_ip" {
   value = "${aws_instance.win10.public_ip}"
 }
+
+output "msf_public_ip" {
+  value = "${aws_instance.msf.public_ip}"
+}

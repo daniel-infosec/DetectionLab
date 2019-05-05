@@ -2,12 +2,16 @@
 provider "aws" {
   shared_credentials_file = "${var.shared_credentials_file}"
   region = "${var.region}"
-  profile = "terraform"
+  profile = "${var.profile}"
 }
 
 # Create a VPC to launch our instances into
 resource "aws_vpc" "default" {
   cidr_block = "192.168.0.0/16"
+
+  tags = {
+    Name = "${var.user_name}"
+  }
 }
 
 # Create an internet gateway to give our subnet access to the outside world
@@ -166,16 +170,13 @@ resource "aws_instance" "logger" {
       "sudo mkdir /home/vagrant/.ssh && sudo cp /home/ubuntu/.ssh/authorized_keys /home/vagrant/.ssh/authorized_keys && sudo chown -R vagrant:vagrant /home/vagrant/.ssh",
       "echo 'vagrant    ALL=(ALL:ALL) NOPASSWD:ALL' | sudo tee -a /etc/sudoers",
       "sudo git clone https://github.com/clong/DetectionLab.git /opt/DetectionLab",
-      "sudo sed -i \"s#sed -i 's/archive.ubuntu.com/us.archive.ubuntu.com/g' /etc/apt/sources.list##g\" /opt/DetectionLab/Vagrant/bootstrap.sh",
       "sudo sed -i 's/eth1/eth0/g' /opt/DetectionLab/Vagrant/bootstrap.sh",
       "sudo sed -i 's/ETH1/ETH0/g' /opt/DetectionLab/Vagrant/bootstrap.sh",
       "sudo sed -i 's#/usr/local/go/bin/go get -u#GOPATH=/root/go /usr/local/go/bin/go get -u#g' /opt/DetectionLab/Vagrant/bootstrap.sh",
       "sudo sed -i 's#/vagrant/resources#/opt/DetectionLab/Vagrant/resources#g' /opt/DetectionLab/Vagrant/bootstrap.sh",
       "sudo chmod +x /opt/DetectionLab/Vagrant/bootstrap.sh",
-      "sudo apt-get update",
+      "sudo apt-get -qq update",
       "sudo /opt/DetectionLab/Vagrant/bootstrap.sh",
-      "sudo pip3.6 install --upgrade --force-reinstall pip==9.0.3 && sudo pip3.6 install -r /home/vagrant/caldera/caldera/requirements.txt && sudo pip3.6 install --upgrade pip",
-      "sudo service caldera stop && sudo service caldera start",
     ]
     connection {
       type = "ssh"
@@ -183,6 +184,62 @@ resource "aws_instance" "logger" {
       private_key = "${file("${var.private_key_path}")}"
     }
   }
+  root_block_device {
+    delete_on_termination = true
+    volume_size = 64
+  }
+}
+
+resource "aws_instance" "msf" {
+  instance_type = "t2.medium"
+  ami = "ami-0ad16744583f21877"
+  tags {
+    Name = "msf"
+  }
+  subnet_id = "${aws_subnet.default.id}"
+  vpc_security_group_ids = ["${aws_security_group.logger.id}"]
+  key_name = "${aws_key_pair.auth.key_name}"
+  private_ip = "192.168.38.106"
+  # Provision the AWS Ubuntu 16.04 AMI from scratch.
+  provisioner "file" {
+    source      = "/Users/dwyleczuk-stern/.ssh/logger"
+    destination = "/home/ubuntu/.ssh/id_rsa"
+    connection {
+      type = "ssh"
+      user = "ubuntu"
+      private_key = "${file("${var.private_key_path}")}"
+    }
+  }
+  provisioner "remote-exec" {
+    inline = [
+      "sudo add-apt-repository universe && sudo apt-get update && sudo apt-get install -y git",
+      "echo 'msf' | sudo tee /etc/hostname && sudo hostnamectl set-hostname msf",
+      "sudo adduser --disabled-password --gecos \"\" vagrant && echo 'vagrant:vagrant' | sudo chpasswd",
+      "sudo mkdir /home/vagrant/.ssh && sudo cp /home/ubuntu/.ssh/authorized_keys /home/vagrant/.ssh/authorized_keys && sudo chown -R vagrant:vagrant /home/vagrant/.ssh",
+      "echo 'vagrant    ALL=(ALL:ALL) NOPASSWD:ALL' | sudo tee -a /etc/sudoers",
+      "sudo echo 127.0.0.1 $(hostname) | sudo tee -a /etc/hosts",
+      "sudo mv /home/ubuntu/.ssh/id_rsa /root/.ssh/id_rsa",
+      "sudo chmod 600 /root/.ssh/id_rsa",
+      "sudo touch /root/.ssh/config",
+      "sudo chmod ugo+rw /root/.ssh/config",
+      "sudo sh -c \"echo 'Host git.praetorianlabs.com\n StrictHostKeyChecking no\n UserKnownHostsFile /dev/null\n IdentityFile /root/.ssh/id_rsa' > /root/.ssh/config\"",
+      "sudo chmod 644 /root/.ssh/config",
+      "sudo git clone git@git.praetorianlabs.com:purple-team/detection-lab-msf.git /opt/DetectionLab",
+      "sudo sed -i 's/eth1/eth0/g' /opt/DetectionLab/Vagrant/bootstrap.sh",
+      "sudo sed -i 's/ETH1/ETH0/g' /opt/DetectionLab/Vagrant/bootstrap.sh",
+      "sudo sed -i 's#/usr/local/go/bin/go get -u#GOPATH=/root/go /usr/local/go/bin/go get -u#g' /opt/DetectionLab/Vagrant/bootstrap.sh",
+      "sudo sed -i 's#/vagrant/resources#/opt/DetectionLab/Vagrant/resources#g' /opt/DetectionLab/Vagrant/bootstrap.sh",
+      "sudo chmod +x /opt/DetectionLab/Vagrant/bootstrap.sh",
+      "sudo apt-get -qq update",
+      "sudo /opt/DetectionLab/Vagrant/bootstrap.sh",
+    ]
+    connection {
+      type = "ssh"
+      user = "ubuntu"
+      private_key = "${file("${var.private_key_path}")}"
+    }
+  }
+  
   root_block_device {
     delete_on_termination = true
     volume_size = 64

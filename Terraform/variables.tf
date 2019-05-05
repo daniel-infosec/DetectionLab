@@ -8,11 +8,11 @@ variable "availability_zone" {
 variable "shared_credentials_file" {
   description = "Path to your AWS credentials file"
   type = "string"
-  default = "/home/username/.aws/credentials"
+  default = "/home/user/.aws/credentials"
 }
  variable "public_key_name" {
    description = "A name for AWS Keypair to use to auth to logger. Can be anything you specify."
-   default = "id_logger"
+   default = "aws_key"
  }
 variable "public_key_path" {
   description = "Path to the public key to be loaded into the logger authorized_keys file"
@@ -33,6 +33,21 @@ variable "external_dns_servers" {
   description = "Configure lab to allow external DNS resolution"
   type = "list"
   default = ["8.8.8.8"]
+}
+variable "user_name" {
+  description = "The username to use tagging and resource identification"
+  type = "string"
+  default = "user"
+}
+variable "gitlab_key_path" {
+  description = "path to the private key to authenticate to gitlab."
+  type = "string"
+  default = "/home/username/.ssh/id_logger"
+}
+variable "profile" {
+  description = "The AWS profile to use"
+  type = "string"
+  default = "default"
 }
 
 # The logger host uses the Amazon Ubuntu 16.04 image

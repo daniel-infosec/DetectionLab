@@ -4,3 +4,6 @@ public_key_name = "id_logger"
 public_key_path = "/home/user/.ssh/id_logger.pub"
 private_key_path = "/home/user/.ssh/id_logger"
 ip_whitelist = ["1.2.3.4/32"]
+user_name = "user"
+gitlab_key_path = "/home/user/.ssh/id_logger"
+profile = "purple"
