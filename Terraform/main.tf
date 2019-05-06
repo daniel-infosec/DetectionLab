@@ -202,7 +202,7 @@ resource "aws_instance" "msf" {
   private_ip = "192.168.38.106"
   # Provision the AWS Ubuntu 16.04 AMI from scratch.
   provisioner "file" {
-    source      = "/Users/dwyleczuk-stern/.ssh/logger"
+    source      = "${var.gitlab_key_path}"
     destination = "/home/ubuntu/.ssh/id_rsa"
     connection {
       type = "ssh"
