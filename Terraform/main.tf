@@ -201,15 +201,6 @@ resource "aws_instance" "msf" {
   key_name = "${aws_key_pair.auth.key_name}"
   private_ip = "192.168.38.106"
   # Provision the AWS Ubuntu 16.04 AMI from scratch.
-  provisioner "file" {
-    source      = "/Users/dwyleczuk-stern/.ssh/logger"
-    destination = "/home/ubuntu/.ssh/id_rsa"
-    connection {
-      type = "ssh"
-      user = "ubuntu"
-      private_key = "${file("${var.private_key_path}")}"
-    }
-  }
   provisioner "remote-exec" {
     inline = [
       "sudo add-apt-repository universe && sudo apt-get update && sudo apt-get install -y git",
