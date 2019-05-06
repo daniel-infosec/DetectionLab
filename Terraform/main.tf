@@ -202,7 +202,7 @@ resource "aws_instance" "msf" {
   private_ip = "192.168.38.106"
   # Provision the AWS Ubuntu 16.04 AMI from scratch.
   provisioner "file" {
-    source      = "${var.gitlab_key_path}"
+    source      = "/Users/dwyleczuk-stern/.ssh/logger"
     destination = "/home/ubuntu/.ssh/id_rsa"
     connection {
       type = "ssh"
@@ -218,13 +218,7 @@ resource "aws_instance" "msf" {
       "sudo mkdir /home/vagrant/.ssh && sudo cp /home/ubuntu/.ssh/authorized_keys /home/vagrant/.ssh/authorized_keys && sudo chown -R vagrant:vagrant /home/vagrant/.ssh",
       "echo 'vagrant    ALL=(ALL:ALL) NOPASSWD:ALL' | sudo tee -a /etc/sudoers",
       "sudo echo 127.0.0.1 $(hostname) | sudo tee -a /etc/hosts",
-      "sudo mv /home/ubuntu/.ssh/id_rsa /root/.ssh/id_rsa",
-      "sudo chmod 600 /root/.ssh/id_rsa",
-      "sudo touch /root/.ssh/config",
-      "sudo chmod ugo+rw /root/.ssh/config",
-      "sudo sh -c \"echo 'Host git.praetorianlabs.com\n StrictHostKeyChecking no\n UserKnownHostsFile /dev/null\n IdentityFile /root/.ssh/id_rsa' > /root/.ssh/config\"",
-      "sudo chmod 644 /root/.ssh/config",
-      "sudo git clone git@git.praetorianlabs.com:purple-team/detection-lab-msf.git /opt/DetectionLab",
+      "sudo git clone https://github.com/daniel-infosec/DetectionLab.git /opt/DetectionLab",
       "sudo sed -i 's/eth1/eth0/g' /opt/DetectionLab/Vagrant/bootstrap.sh",
       "sudo sed -i 's/ETH1/ETH0/g' /opt/DetectionLab/Vagrant/bootstrap.sh",
       "sudo sed -i 's#/usr/local/go/bin/go get -u#GOPATH=/root/go /usr/local/go/bin/go get -u#g' /opt/DetectionLab/Vagrant/bootstrap.sh",
